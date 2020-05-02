@@ -1,18 +1,35 @@
 <!DOCTYPE HTML>
 <html>
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: content: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
-    <script src="components/loader.js"></script>
-    <link rel="stylesheet" href="components/loader.css">
-    <link rel="stylesheet" href="css/style.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<meta http-equiv="Content-Security-Policy" content="default-src * data: gap: content: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+	<script src="components/loader.js"></script>
+	<link rel="stylesheet" href="components/loader.css">
+	<link rel="stylesheet" href="css/style.css">
 
-  	<link rel="stylesheet" type="text/css" href="css/jquery.pagepiling.css" />
+	<link rel="stylesheet" type="text/css" href="css/jquery.pagepiling.css" />
 
-  	<script src="js/jquery.min.js"></script>
-  	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
+	<script src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
+		var currentPage = 0;
+
+    var pageNavigate = [
+      { prev: 1, next: 2 },  // page01
+      { prev: 1, next: 3 },  // page02
+      { prev: 2, next: 4 },  // page03
+      { prev: 3, next: 5 },  // page04
+      { prev: 4, next: 5 },  // page05
+    ];
+
+    var section2_Objects = [
+      { id : "door01", top: 8, left: 156 },
+//      { id : "door02", top: 0, left: 0 },
+//      { id : "door03", top: 0, left: 0 },
+    ];
+
     ons.ready( function() {
   	//	$(document).ready(function() {
      /*
@@ -26,82 +43,134 @@
 			    navigation: false,
 
        		afterRender: function(){
-		      	console.log("The resulting DOM structure is ready");
-            $(document).on('tap', '.pictureContainer', function(event) {
-              console.log("left " + event.originalEvent.gesture.target);
-              console.log(event.originalEvent.gesture.target.closest(".section").id)
-              $.fn.pagepiling.moveSectionDown();
+            $(document).on('tap', '.object', function(event) {
+              if (currentPage == 2) moveFromPage02();
             });
+
             $(document).on('swipeleft', '.pictureContainer', function(event) {
-              console.log("left");
-              $.fn.pagepiling.moveSectionDown();
+              if (currentPage == 2) {
+              } else {
+                $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+              }
             });
+
             $(document).on('swiperight', '.pictureContainer', function(event) {
-              console.log("right");
-              $.fn.pagepiling.moveSectionUp();
+              $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
             });
-		      }
+		      },
+
+          afterLoad: function(anchorLink, index){
+            currentPage = index;
+
+            if (index == 2) drawPage02();
+          },
+
+         	onLeave: function(index, nextIndex, direction){
+            if (index == 2) erasePage02();
+          }
 			  });
 
         $.fn.pagepiling.setAllowScrolling(false);
+        currentPage = 1;
 	    });
-    </script>
 
-    <style>
+      function drawPage02() {
+        var picture = $("#page02 .picture");
+        var ratio = picture.width() / picture[0].naturalWidth;
 
-.section { 
-  background-image: url(img/cork021.jpg);
-}
+        var size = section2_Objects.length;
+        for (var i = 0; i < size; i++) {
+          var door = $("#" + section2_Objects[i].id);
+          door.width(door[0].naturalWidth * ratio);
+          door.offset({
+            top: picture.offset().top + section2_Objects[i].top * ratio,
+            left: picture.offset().left + section2_Objects[i].left * ratio
+          });
+          door.addClass("show");
+        }
+      }
 
-.pictureContainer { 
-  background-image: url(img/cork021.jpg);
-  text-align: center;
-}
+      function moveFromPage02() {
+        $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+      }
 
-.pictureContainer img {
-    width: 70%;
-    height: auto;
-}
-    </style>
+      function erasePage02() {
+        $("#page02 .object").each(function(){
+          $(this).removeClass("show");
+        })
+      }
+
+	</script>
+
+	<style>
+		.section {
+			background-image: url(img/cork021.jpg);
+		}
+
+		.pictureContainer {
+			background-image: url(img/cork021.jpg);
+			text-align: center;
+		}
+
+		.picture {
+			width: 70%;
+			height: auto;
+		}
+
+		.object {
+			position: absolute;
+			top: 0pt;
+			left: 0pt;
+			opacity: 0;
+		}
+
+		.object.show {
+			opacity: 1;
+		}
+	</style>
 
 </head>
+
 <body>
 	<div id="pagepiling">
-    <div class="section" id="section1">
-      <ons-gesture-detector>
-        <div class="pictureContainer">
-     			<img src="img/ehon01.png" />
-        </div>
-      </ons-gesture-detector>
-    </div>
-    <div class="section" id="section2">
-      <ons-gesture-detector>
-        <div class="pictureContainer">
-    			<img src="img/ehon02.png" />
-        </div>
-      </ons-gesture-detector>
-    </div>
-    <div class="section" id="section3">
-      <ons-gesture-detector>
-        <div class="pictureContainer">
-	  	  	<img src="img/ehon03.png" />
-        </div>
-      </ons-gesture-detector>
-    </div>
-    <div class="section" id="section4">
-      <ons-gesture-detector>
-        <div class="pictureContainer">
-	  	  	<img src="img/ehon04.png" />
-       </div>
-     </ons-gesture-detector>
-   </div>
-    <div class="section" id="section5">
-      <ons-gesture-detector>
-        <div class="pictureContainer">
-	  	  	<img src="img/ehon05.png" />
-        </div>
-      </ons-gesture-detector>
-    </div>
+		<div class="section" id="page01">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/ehon01.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page02">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/ehon02.png" />
+					<img class="object" id="door01" src="img/door01.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page03">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/ehon03.png" />
+					<img class="object" id="door01" src="img/door01.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page04">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/ehon04.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page05">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/ehon05.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
 	</div>
 </body>
+
 </html>
