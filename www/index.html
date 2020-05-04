@@ -29,78 +29,128 @@
 //      { id : "door02", top: 0, left: 0 },
 //      { id : "door03", top: 0, left: 0 },
     ];
-
+    
     ons.ready( function() {
-  	//	$(document).ready(function() {
-     /*
-			* Plugin intialization
-			*/
-	    	$('#pagepiling').pagepiling({
-          direction: 'horizontal',
-          touchSensitivity: 5,
-//	    		anchors: ['page1', 'page2', 'page3', 'page4'],
- 		      sectionsColor: ['white', 'white', 'white', 'white', 'white'],
-			    navigation: false,
+      /*
+			 * Plugin intialization
+			 */
+	  	$('#pagepiling').pagepiling({
+        direction: 'horizontal',
+        touchSensitivity: 5,
+//   		anchors: ['page1', 'page2', 'page3', 'page4'],
+ 	      sectionsColor: ['white', 'white', 'white', 'white', 'white'],
+		    navigation: false,
 
-       		afterRender: function(){
-            $(document).on('tap', '.object', function(event) {
-              if (currentPage == 2) moveFromPage02();
-            });
+     		afterRender: function(){
+          $(document).on('tap', '.object', function(event) {
+            switch (currentPage) {
+              case 2: 
+                moveFromPage02();
+                break;
+              default:
+                break;
+            }
+          });
 
-            $(document).on('swipeleft', '.pictureContainer', function(event) {
-              if (currentPage == 2) {
-              } else {
+          $(document).on('swipeleft', '.pictureContainer', function(event) {
+            switch (currentPage) {
+              case 2:
+                break;
+              default:
                 $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-              }
-            });
+                break;
+            }
+          });
 
-            $(document).on('swiperight', '.pictureContainer', function(event) {
-              $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
-            });
-		      },
+          $(document).on('swiperight', '.pictureContainer', function(event) {
+            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
+          });
+	      },
 
-          afterLoad: function(anchorLink, index){
-            currentPage = index;
+        afterLoad: function(anchorLink, index){
+          currentPage = index;
 
-            if (index == 2) drawPage02();
-          },
-
-         	onLeave: function(index, nextIndex, direction){
-            if (index == 2) erasePage02();
+          switch (currentPage) {
+            case 2:
+              drawPage02();
+              break;
+            default:
+              drawSwipeIcon();
+              break;
           }
-			  });
+        },
 
-        $.fn.pagepiling.setAllowScrolling(false);
-        currentPage = 1;
+        onLeave: function(index, nextIndex, direction){
+          switch (currentPage) {
+            case 2:
+              erasePage02();
+            default:
+              eraseSwipeIcon();
+              break;
+          }
+        }
 	    });
 
-      function drawPage02() {
-        var picture = $("#page02 .picture");
-        var ratio = picture.width() / picture[0].naturalWidth;
+      $.fn.pagepiling.setAllowScrolling(false);
+      currentPage = 1;
 
-        var size = section2_Objects.length;
-        for (var i = 0; i < size; i++) {
-          var door = $("#" + section2_Objects[i].id);
-          door.width(door[0].naturalWidth * ratio);
-          door.offset({
-            top: picture.offset().top + section2_Objects[i].top * ratio,
-            left: picture.offset().left + section2_Objects[i].left * ratio
-          });
-          door.addClass("show");
-        }
+      drawSwipeIcon();
+	  });
+
+    function drawPage02() {
+      var picture = $("#page02 .picture");
+      var ratio = picture.width() / picture[0].naturalWidth;
+
+      var size = section2_Objects.length;
+      for (var i = 0; i < size; i++) {
+        var door = $("#" + section2_Objects[i].id);
+        door.width(door[0].naturalWidth * ratio);
+        door.offset({
+          top: picture.offset().top + section2_Objects[i].top * ratio,
+          left: picture.offset().left + section2_Objects[i].left * ratio
+        });
+        door.addClass("show");
       }
+    }
 
-      function moveFromPage02() {
-        $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-      }
+    function moveFromPage02() {
+      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+    }
 
-      function erasePage02() {
-        $("#page02 .object").each(function(){
-          $(this).removeClass("show");
-        })
-      }
+    function erasePage02() {
+      $("#page02 .object").each(function(){
+        $(this).removeClass("show");
+      })
+    }
 
-	</script>
+    function drawSwipeIcon() {
+      console.log("drawSwipeIcon()");
+      var picture = $("#page0" + currentPage + " .picture");
+      var ratio = picture.width() / picture[0].naturalWidth;
+
+      console.log("icon");
+      $("#page0" + currentPage + " .gesture").each(function(){
+        $(this).width($(this)[0].naturalWidth * ratio);
+        console.log("pt ph th = " + picture.offset().top + " " + picture.height() + " " + $(this).height());
+        console.log("pl pw tw = " + picture.offset().left + " " + picture.width() + " " + $(this).width());
+        $(this).offset({
+          top: picture.offset().top + picture.height() - $(this).height(),
+          left: picture.offset().left + picture.width() - $(this).width()
+        });
+        console.log("pt ph th = " + picture.offset().top + " " + picture.height() + " " + $(this).height());
+        console.log("pl pw tw = " + picture.offset().left + " " + picture.width() + " " + $(this).width());
+        console.log("tt tl = " + $(this).offset().top + " " + $(this).offset().left);
+        $(this).addClass("show");
+      });
+    }
+
+    function eraseSwipeIcon() {
+      $("#page0" + currentPage + " .gesture").each(function(){
+        $(this).removeClass("show");
+      });
+    }
+
+  </script>
 
 	<style>
 		.section {
@@ -127,6 +177,22 @@
 		.object.show {
 			opacity: 1;
 		}
+
+    .gesture {
+			position: absolute;
+      top: 0px;
+      left: 0px; 
+      opacity: 0;
+    }
+
+    .gesture.show {
+       -webkit-animation: swipeLeft 2s ease-in-out 5s infinite;
+    }
+
+    @-webkit-keyframes swipeLeft {
+      from { opacity: 0; }
+      to { opacity: 1; -webkit-transform: translateX(-150px); }
+    }
 	</style>
 
 </head>
@@ -136,37 +202,37 @@
 		<div class="section" id="page01">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
-					<img class="picture" src="img/ehon01.png" />
+					<img class="picture" src="img/page01.png" />
+					<img class="gesture" src="img/icon_swipe.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
 		<div class="section" id="page02">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
-					<img class="picture" src="img/ehon02.png" />
-					<img class="object" id="door01" src="img/door01.png" />
-				</div>
+					<img class="picture" src="img/page02.png" />
+					<img class="object" id="door01" src="img/page02_door01.png" />
+        </div>
 			</ons-gesture-detector>
 		</div>
 		<div class="section" id="page03">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
-					<img class="picture" src="img/ehon03.png" />
-					<img class="object" id="door01" src="img/door01.png" />
+					<img class="picture" src="img/page03.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
 		<div class="section" id="page04">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
-					<img class="picture" src="img/ehon04.png" />
+					<img class="picture" src="img/page04.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
 		<div class="section" id="page05">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
-					<img class="picture" src="img/ehon05.png" />
+					<img class="picture" src="img/page05.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
