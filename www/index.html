@@ -10,7 +10,6 @@
 	<link rel="stylesheet" href="css/style.css">
 
 	<link rel="stylesheet" type="text/css" href="css/jquery.pagepiling.css" />
-
 	<script src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
@@ -22,6 +21,14 @@
       { prev: 2, next: 4 },  // page03
       { prev: 3, next: 5 },  // page04
       { prev: 4, next: 5 },  // page05
+    ];
+
+    var textArea = [
+      { top: 650, left: 563, width: 579, height: 259 }, // page01
+      { top: 0, left: 0, width: 0, height: 0 }, // page01
+      { top: 0, left: 0, width: 0, height: 0 }, // page01
+      { top: 0, left: 0, width: 0, height: 0 }, // page01
+      { top: 0, left: 0, width: 0, height: 0 }, // page01
     ];
 
     var section2_Objects = [
@@ -42,29 +49,20 @@
 		    navigation: false,
 
      		afterRender: function(){
-          $(document).on('tap', '.object', function(event) {
-            switch (currentPage) {
-              case 2: 
-                moveFromPage02();
-                break;
-              default:
-                break;
-            }
-          });
+          $(document).on('swipeleft', '.pictureContainer', nextPage);
+          $(document).on('swipeleft', '.picture', nextPage);
+          $(document).on('swipeleft', '.object', nextPage);
+          $(document).on('swipeleft', '.gesture', nextPage);
+          $(document).on('swipeleft', '.text', nextPage);
 
-          $(document).on('swipeleft', '.pictureContainer', function(event) {
-            switch (currentPage) {
-              case 2:
-                break;
-              default:
-                $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-                break;
-            }
-          });
+          $(document).on('swiperight', '.pictureContainer', prevPage);
+          $(document).on('swiperight', '.picture', prevPage);
+          $(document).on('swiperight', '.object', prevPage);
+          $(document).on('swiperight', '.gesture', prevPage);
+          $(document).on('swiperight', '.text', prevPage);
 
-          $(document).on('swiperight', '.pictureContainer', function(event) {
-            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
-          });
+          $(document).on('tap', '.object', tapObject);
+          $(document).on('tap', '.gesture', tapObject);
 	      },
 
         afterLoad: function(anchorLink, index){
@@ -75,7 +73,7 @@
               drawPage02();
               break;
             default:
-              drawSwipeIcon();
+              drawPage();
               break;
           }
         },
@@ -84,8 +82,9 @@
           switch (currentPage) {
             case 2:
               erasePage02();
+              break;
             default:
-              eraseSwipeIcon();
+              erasePage();
               break;
           }
         }
@@ -94,8 +93,37 @@
       $.fn.pagepiling.setAllowScrolling(false);
       currentPage = 1;
 
-      drawSwipeIcon();
+      drawPage();
 	  });
+
+    function nextPage(event) {
+      console.log("currentPage = " + currentPage);
+      switch (currentPage) {
+        case 2:
+          break;
+        default:
+          $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+          break;
+      }
+    }
+
+    function nextPage02() {
+      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+    }
+
+    function prevPage(event) {
+      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
+    }
+
+    function tapObject(event) {
+      switch (currentPage) {
+        case 2: 
+          nextPage02();
+          break;
+        default:
+          break;
+      }
+    }
 
     function drawPage02() {
       var picture = $("#page02 .picture");
@@ -103,48 +131,61 @@
 
       var size = section2_Objects.length;
       for (var i = 0; i < size; i++) {
-        var door = $("#" + section2_Objects[i].id);
+        var door = $("#" + section2_Objects[i].id + " .door");
         door.width(door[0].naturalWidth * ratio);
         door.offset({
           top: picture.offset().top + section2_Objects[i].top * ratio,
           left: picture.offset().left + section2_Objects[i].left * ratio
         });
         door.addClass("show");
+
+        var tap = $("#" + section2_Objects[i].id + " .tap")
+        tap.width(tap[0].naturalWidth * ratio);
+        tap.offset({
+          top: door.offset().top + door.height()/2 - tap.height()/3,
+          left: door.offset().left + door.width()/2 - tap.width()/2
+        });
+        tap.addClass(section2_Objects[i].id);
       }
     }
 
-    function moveFromPage02() {
-      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-    }
-
     function erasePage02() {
-      $("#page02 .object").each(function(){
-        $(this).removeClass("show");
-      })
+      var size = section2_Objects.length;
+      for (var i = 0; i < size; i++) {
+        $("#" + section2_Objects[i].id + " #door").removeClass("show");
+        $("#" + section2_Objects[i].id + " #tap").removeClass(section2_Objects[i].id);
+      }
     }
 
-    function drawSwipeIcon() {
-      console.log("drawSwipeIcon()");
+    function drawPage() {
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
 
-      console.log("icon");
       $("#page0" + currentPage + " .gesture").each(function(){
         $(this).width($(this)[0].naturalWidth * ratio);
-        console.log("pt ph th = " + picture.offset().top + " " + picture.height() + " " + $(this).height());
-        console.log("pl pw tw = " + picture.offset().left + " " + picture.width() + " " + $(this).width());
         $(this).offset({
           top: picture.offset().top + picture.height() - $(this).height(),
           left: picture.offset().left + picture.width() - $(this).width()
         });
-        console.log("pt ph th = " + picture.offset().top + " " + picture.height() + " " + $(this).height());
-        console.log("pl pw tw = " + picture.offset().left + " " + picture.width() + " " + $(this).width());
-        console.log("tt tl = " + $(this).offset().top + " " + $(this).offset().left);
         $(this).addClass("show");
+      });
+
+      $("#page0" + currentPage + " .text").each(function(){
+        $(this).width(textArea[currentPage-1].width * ratio);
+        $(this).height(textArea[currentPage-1].height * ratio);
+        $(this).offset({
+          top: picture.offset().top + textArea[currentPage-1].top * ratio,
+          left: picture.offset().left + textArea[currentPage-1].left * ratio
+        });
+        if ($(this).hasClass("jp")) {
+          $(this).addClass("show");
+        } else { // en
+          $(this).removeClass("show");
+        }
       });
     }
 
-    function eraseSwipeIcon() {
+    function erasePage() {
       $("#page0" + currentPage + " .gesture").each(function(){
         $(this).removeClass("show");
       });
@@ -152,7 +193,12 @@
 
   </script>
 
-	<style>
+	<style type="text/css">
+    @font-face {
+      font-family: KosugiMaru-Regular;
+      src: url('./font/KosugiMaru-Regular.ttf') format('truetype');
+    }
+
 		.section {
 			background-image: url(img/cork021.jpg);
 		}
@@ -167,10 +213,26 @@
 			height: auto;
 		}
 
+    .text {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+      width: 200px;
+      text-align: left;
+      overflow-wrap: break-word;
+      font-size: 3vw;
+      font-family: "KosugiMaru-Regular","Kosugi Maru","sans-serif";
+      opacity: 0;
+    }
+
+    .text.show {
+      opacity: 1;
+    }
+
 		.object {
 			position: absolute;
-			top: 0pt;
-			left: 0pt;
+			top: 0px;
+			left: 0px;
 			opacity: 0;
 		}
 
@@ -185,13 +247,43 @@
       opacity: 0;
     }
 
-    .gesture.show {
-       -webkit-animation: swipeLeft 2s ease-in-out 5s infinite;
+    .gesture.swipe.show {
+       -webkit-animation: swipeLeft 2s ease-in-out 10s infinite ;
+    }
+
+    .gesture.tap.door01 {
+       -webkit-animation: tapDoor01 6s ease-in-out 10s infinite ;
     }
 
     @-webkit-keyframes swipeLeft {
-      from { opacity: 0; }
-      to { opacity: 1; -webkit-transform: translateX(-150px); }
+        0% { opacity: 0; }
+       80% { opacity: 1; -webkit-transform: translateX(-150px); }
+      100% { opacity: 1; -webkit-transform: translateX(-150px); }
+    }
+
+    @-webkit-keyframes tapDoor01 {
+        0% { opacity: 0; }
+       20% { opacity: 1; }
+       30% { opacity: 1; }
+       33% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    @-webkit-keyframes tapDoor02 {
+        0% { opacity: 0; }
+       33% { opacity: 0; }
+       53% { opacity: 1; }
+       63% { opacity: 1; }
+       66% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    @-webkit-keyframes tapDoor03 {
+        0% { opacity: 0; }
+       66% { opacity: 0; }
+       86% { opacity: 1; }
+       96% { opacity: 1; }
+      100% { opacity: 0; }
     }
 	</style>
 
@@ -203,7 +295,9 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page01.png" />
-					<img class="gesture" src="img/icon_swipe.png" />
+          <div class="text jp">むかしむかしあるところに、おじいさんとおばあさんがいました。</div>
+          <div class="text en">Once upon a time, there were a grandpa and grandma.</div>
+					<img class="gesture swipe" src="img/icon_swipe.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
@@ -211,7 +305,10 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page02.png" />
-					<img class="object" id="door01" src="img/page02_door01.png" />
+          <div id="door01">
+  					<img class="object door" src="img/page02_door01.png" />
+	  				<img class="gesture tap" src="img/icon_tap.png" />
+          </div>
         </div>
 			</ons-gesture-detector>
 		</div>
@@ -219,6 +316,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page03.png" />
+					<img class="gestur swipe" src="img/icon_swipe.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
@@ -226,6 +324,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page04.png" />
+					<img class="gesture swipe" src="img/icon_swipe.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
