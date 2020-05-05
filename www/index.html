@@ -68,9 +68,24 @@
           $(document).on('tap', '.howto', function(event) {
             howtoModal.show();
           });
-          $(document).on('tap', '#howtoModal', function(event) {
+          $(document).on('tap', '.howtoModal', function(event) {
             howtoModal.hide();
           });
+
+          var duration = $("#page01").width();
+          console.log("duration = " + duration);
+          var popupTips = [
+             "10% {left:" + Math.round(duration*0.5) + "px}",
+             "90% {left:" + Math.round(duration*0.5) + "px}",
+            "100% {left:" + duration + "px}"
+          ];
+          var cssAnimation = document.createElement('style');
+          cssAnimation.type = 'text/css';
+          var rules = document.createTextNode('@-webkit-keyframes popupTips {'+
+            popupTips.join(" ")+
+          '}');
+          cssAnimation.appendChild(rules);
+          document.getElementsByTagName("head")[0].appendChild(cssAnimation);
 	      },
 
         afterLoad: function(anchorLink, index){
@@ -107,20 +122,20 @@
     function nextPage(event) {
       switch (currentPage) {
         case 2:
+        case 5:
           if (timeoutID < 0) {
-            $("#page0" + currentPage + " .tips").each(function(){
-              console.log("move tips");
-              $(this).addClass("show");
-              $(this).addClass("move");
-//              $(this).css("-webkit-transform", "translateX(-" + $(this).width() + "px)");
-              timeoutID = setTimeout(function() {
-                console.log("move tips back");
-//                $(this).css("-webkit-transform", "translateX(" + $(this).width() + "px)");
-                $(this).removeClass("move");
-                $(this).removeClass("show");
-                timeoutID = -1;
-              }, 3000);
+            var tips = $("#page0" + currentPage + " .tips:eq(0)");
+            tips.offset({
+              top: $("#page0" + currentPage).height() * 0.5,
+              left: $("#page0" + currentPage).width()
             });
+            var duration = $("#page0" + currentPage).width() * 0.5;
+            tips.addClass("show");
+            //tips.animate({left: '-=' + duration + 'px'}, 500).animate({left: '+=0px'}, 3000).animate({ left: '+=' + duration + 'px'}, 500);
+            timeoutID = setTimeout(function() {
+              tips.removeClass("show");
+              timeoutID = -1;
+            }, 4000);
           }
           break;
         default:
@@ -175,7 +190,6 @@
     }
 
     function drawPage() {
-      console.log("drawPage()");
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
 
@@ -188,7 +202,7 @@
         $(this).addClass("show");
       });
 
-      $("#page0" + currentPage + " > .text").each(function(){
+      $("#page0" + currentPage + " .story").each(function(){
         $(this).width(textArea[currentPage-1].width * ratio);
         $(this).height(textArea[currentPage-1].height * ratio);
         $(this).offset({
@@ -201,15 +215,6 @@
           $(this).removeClass("show");
         }
       });
-
-      $("#page0" + currentPage + " .tips").each(function(){
-//        console.log($("#page0" + currentPage).width() + " " + picture.height() + " " + $("#page0" + currentPage).height());
-        $(this).offset({
-          top: $("#page0" + currentPage).height() * 0.5,
-          left: $("#page0" + currentPage).width()
-        });
-      });
-
     }
 
     function erasePage02() {
@@ -230,7 +235,10 @@
         $(this).removeClass("show");
       });
 
-      if (timeoutID > 0) clearTimeout(timeoutID);
+      if (timeoutID > 0) {
+        clearTimeout(timeoutID);
+        timeoutID = -1;
+      }
     }
 
   </script>
@@ -287,20 +295,18 @@
 
     .tips {
       position: absolute;
-      width: 40%;
+      width: 50%;
       height: 30%;
+      top: 0px;
+      left: 0px;
       padding: 0px;
       text-align: center;
       opacity: 0;
-      transition: all 0.5s linear;
     }
 
     .tips.show {
       opacity: 1;
-    }
-
-    .move {
-      -webkit-transform: translateX(-100px);
+      -webkit-animation: popupTips 4s linear;
     }
 
     .tips img {
@@ -400,8 +406,8 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page01.png" />
-          <div class="text jp">あるひ、おさんぽにでかけた○○ちゃんは、ふしぎなみちをみつけました。</div>
-          <div class="text en">One day, XXX took a walk and found a strange passway.</div>
+          <div class="text story jp">あるひ、おさんぽにでかけた○○ちゃんは、ふしぎなみちをみつけました。</div>
+          <div class="text story en">One day, XXX took a walk and found a strange passway.</div>
 <!--
 					<img class="gesture swipe" src="img/icon_swipe.png" />
 -->
@@ -421,7 +427,7 @@
           </div>
           <div class="tips">
             <img src="img/tips.png" />
-            <div class="text tip">3つのとびらのうち、<br>すきなとびらを<br>ゆびでタップしてね</div>
+            <div class="text tip">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
         </div>
@@ -447,6 +453,10 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page05.png" />
+          <div class="tips">
+            <img src="img/tips.png" />
+            <div class="text tip">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
+          </div>
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
