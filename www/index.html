@@ -14,6 +14,7 @@
 	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
 		var currentPage = 0;
+    var timeoutID = -1;
 
     var pageNavigate = [
       { prev: 1, next: 2 },  // page01
@@ -63,6 +64,13 @@
 
           $(document).on('tap', '.object', tapObject);
           $(document).on('tap', '.gesture', tapObject);
+
+          $(document).on('tap', '.howto', function(event) {
+            howtoModal.show();
+          });
+          $(document).on('tap', '#howtoModal', function(event) {
+            howtoModal.hide();
+          });
 	      },
 
         afterLoad: function(anchorLink, index){
@@ -99,6 +107,21 @@
     function nextPage(event) {
       switch (currentPage) {
         case 2:
+          if (timeoutID < 0) {
+            $("#page0" + currentPage + " .tips").each(function(){
+              console.log("move tips");
+              $(this).addClass("show");
+              $(this).addClass("move");
+//              $(this).css("-webkit-transform", "translateX(-" + $(this).width() + "px)");
+              timeoutID = setTimeout(function() {
+                console.log("move tips back");
+//                $(this).css("-webkit-transform", "translateX(" + $(this).width() + "px)");
+                $(this).removeClass("move");
+                $(this).removeClass("show");
+                timeoutID = -1;
+              }, 3000);
+            });
+          }
           break;
         default:
           $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
@@ -138,25 +161,21 @@
         });
         door.addClass("show");
 
-        var tap = $("#" + section2_Objects[i].id + " .tap")
-        tap.width(tap[0].naturalWidth * ratio);
-        tap.offset({
-          top: door.offset().top + door.height()/2 - tap.height()/3,
-          left: door.offset().left + door.width()/2 - tap.width()/2
+        $("#" + section2_Objects[i].id + " .tap").each(function() {
+          $(this).width($(this)[0].naturalWidth * ratio);
+          $(this).offset({
+            top: door.offset().top + door.height()/2 - $(this).height()/3,
+            left: door.offset().left + door.width()/2 - $(this).width()/2
+          });
+          $(this).addClass(section2_Objects[i].id);
         });
-        tap.addClass(section2_Objects[i].id);
       }
-    }
 
-    function erasePage02() {
-      var size = section2_Objects.length;
-      for (var i = 0; i < size; i++) {
-        $("#" + section2_Objects[i].id + " #door").removeClass("show");
-        $("#" + section2_Objects[i].id + " #tap").removeClass(section2_Objects[i].id);
-      }
+      drawPage();
     }
 
     function drawPage() {
+      console.log("drawPage()");
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
 
@@ -169,7 +188,7 @@
         $(this).addClass("show");
       });
 
-      $("#page0" + currentPage + " .text").each(function(){
+      $("#page0" + currentPage + " > .text").each(function(){
         $(this).width(textArea[currentPage-1].width * ratio);
         $(this).height(textArea[currentPage-1].height * ratio);
         $(this).offset({
@@ -182,12 +201,36 @@
           $(this).removeClass("show");
         }
       });
+
+      $("#page0" + currentPage + " .tips").each(function(){
+//        console.log($("#page0" + currentPage).width() + " " + picture.height() + " " + $("#page0" + currentPage).height());
+        $(this).offset({
+          top: $("#page0" + currentPage).height() * 0.5,
+          left: $("#page0" + currentPage).width()
+        });
+      });
+
+    }
+
+    function erasePage02() {
+      var size = section2_Objects.length;
+      for (var i = 0; i < size; i++) {
+        $("#" + section2_Objects[i].id + " .door").removeClass("show");
+        $("#" + section2_Objects[i].id + " .tap").removeClass(section2_Objects[i].id);
+      }
+
+      erasePage();
     }
 
     function erasePage() {
       $("#page0" + currentPage + " .gesture").each(function(){
         $(this).removeClass("show");
       });
+      $("#page0" + currentPage + " .tips").each(function(){
+        $(this).removeClass("show");
+      });
+
+      if (timeoutID > 0) clearTimeout(timeoutID);
     }
 
   </script>
@@ -197,6 +240,12 @@
       font-family: KosugiMaru-Regular;
       src: url('./font/KosugiMaru-Regular.ttf') format('truetype');
     }
+
+		.howtoModal {
+      text-align: center;
+      font-size: 4vw;
+      font-family: "KosugiMaru-Regular","Kosugi Maru","sans-serif";
+		}
 
 		.section {
 			background-image: url(img/cork021.jpg);
@@ -209,6 +258,14 @@
 
 		.picture {
 			width: 70%;
+			height: auto;
+		}
+
+		.howto {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			width: 7%;
 			height: auto;
 		}
 
@@ -225,6 +282,45 @@
     }
 
     .text.show {
+      opacity: 1;
+    }
+
+    .tips {
+      position: absolute;
+      width: 40%;
+      height: 30%;
+      padding: 0px;
+      text-align: center;
+      opacity: 0;
+      transition: all 0.5s linear;
+    }
+
+    .tips.show {
+      opacity: 1;
+    }
+
+    .move {
+      -webkit-transform: translateX(-100px);
+    }
+
+    .tips img {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+    }
+
+    .tips .text {
+      position: absolute;
+      width: 75%;
+      height: 60%;
+      display: table-cell;
+      vertical-align: middle;
+      top: 50%;
+      left: 50%;
+      -webkit-transform: translate(-50%,-50%);
       opacity: 1;
     }
 
@@ -289,6 +385,16 @@
 </head>
 
 <body>
+  <ons-modal class="howtoModal" id="howtoModal" var="howtoModal">
+    <p>絵本の読み方</p>
+    <p>左にスワイプ：次のページに進む</p>
+    <p>右にスワイプ：前のページに戻る</p>
+    <p>
+    <p>特別な操作をしないと<br>次に進まないページもあるよ！</p>
+    <p>
+    <p style="text-align: right; font-size: 3vw;">タップして戻る　　　</p>
+  </ons-modal>
+
 	<div id="pagepiling">
 		<div class="section" id="page01">
 			<ons-gesture-detector>
@@ -296,7 +402,10 @@
 					<img class="picture" src="img/page01.png" />
           <div class="text jp">あるひ、おさんぽにでかけた○○ちゃんは、ふしぎなみちをみつけました。</div>
           <div class="text en">One day, XXX took a walk and found a strange passway.</div>
+<!--
 					<img class="gesture swipe" src="img/icon_swipe.png" />
+-->
+ 					<img class="howto" src="img/howto.png"/>
 				</div>
 			</ons-gesture-detector>
 		</div>
@@ -306,8 +415,15 @@
 					<img class="picture" src="img/page02.png" />
           <div id="door01">
   					<img class="object door" src="img/page02_door01.png" />
+<!--
 	  				<img class="gesture tap" src="img/icon_tap.png" />
+-->
           </div>
+          <div class="tips">
+            <img src="img/tips.png" />
+            <div class="text tip">3つのとびらのうち、<br>すきなとびらを<br>ゆびでタップしてね</div>
+          </div>
+ 					<img class="howto" src="img/howto.png" />
         </div>
 			</ons-gesture-detector>
 		</div>
@@ -315,7 +431,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page03.png" />
-    			<img class="gesture swipe" src="img/icon_swipe.png" />
+ 					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
@@ -323,7 +439,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page04.png" />
-    			<img class="gesture swipe" src="img/icon_swipe.png" />
+ 					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
@@ -331,6 +447,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page05.png" />
+ 					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
 		</div>
