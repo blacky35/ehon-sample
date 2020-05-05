@@ -126,12 +126,11 @@
 	  });
 
     function nextPage(event) {
-      console.log("nextPage()");
       switch (currentPage) {
         case 2:
         case 5:
           if (timeoutID < 0) {
-            console.log("show tips " + currentPage);
+            console.log("show tips");
             var tips = $("#page0" + currentPage + " .tips:eq(0)");
             tips.offset({
               top: $("#page0" + currentPage).height() * 0.5,
@@ -139,7 +138,6 @@
             });
             tips.addClass("show");
             timeoutID = setTimeout(function() {
-              console.log("hide tips");
               tips.removeClass("show");
               timeoutID = -1;
             }, 4000);
@@ -334,15 +332,15 @@
       position: absolute;
       width: 50%;
       height: 30%;
-      top: 0px;
-      left: 0px;
+      top: -500px;
+      left: -500px;
       padding: 0px;
       text-align: center;
-      display: none;
+      opacity: 0;
     }
 
     .tips.show {
-      display: block;
+      opacity: 1;
       -webkit-animation: popupTips 4s linear;
     }
 
@@ -461,7 +459,7 @@
 					<img class="object door" id="door01" src="img/page02_door01.png" />
           <div class="tips">
             <img src="img/tips.png" />
-            <div class="text tip">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
+            <div class="text tip" id="1">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
         </div>
@@ -483,7 +481,7 @@
 				</div>
 			</ons-gesture-detector>
 		</div>
-		<div class="section" id="page05">
+ 		<div class="section" id="page05">
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page05.png" />
@@ -491,7 +489,7 @@
 					<img class="object ant" id="ant01" src="img/page05_ant01.png" />
           <div class="tips">
             <img src="img/tips.png" />
-            <div class="text tip">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
+            <div class="text tip" id="1">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
 				</div>
