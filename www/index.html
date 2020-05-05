@@ -21,7 +21,9 @@
       { prev: 1, next: 3 },  // page02
       { prev: 2, next: 4 },  // page03
       { prev: 3, next: 5 },  // page04
-      { prev: 4, next: 5 },  // page05
+      { prev: 4, next: 6 },  // page05
+      { prev: 5, next: 7 },  // page05
+      { prev: 6, next: 7 },  // page05
     ];
 
     var textArea = [
@@ -32,10 +34,15 @@
       { top: 0, left: 0, width: 0, height: 0 }, // page01
     ];
 
-    var section2_Objects = [
+    var page02_Objects = [
       { id : "door01", top: 8, left: 156 },
 //      { id : "door02", top: 0, left: 0 },
 //      { id : "door03", top: 0, left: 0 },
+    ];
+    
+    var page05_Objects = [
+      { id : "cake01", top: 308, left: 714 },
+      { id : "ant01", top: 350, left: 300 },
     ];
     
     ons.ready( function() {
@@ -45,32 +52,32 @@
 	  	$('#pagepiling').pagepiling({
         direction: 'horizontal',
         touchSensitivity: 5,
-//   		anchors: ['page1', 'page2', 'page3', 'page4'],
- 	      sectionsColor: ['white', 'white', 'white', 'white', 'white'],
+ 	      sectionsColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white'],
 		    navigation: false,
 
      		afterRender: function(){
           $(document).on('swipeleft', '.pictureContainer', nextPage);
           $(document).on('swipeleft', '.picture', nextPage);
           $(document).on('swipeleft', '.object', nextPage);
-          $(document).on('swipeleft', '.gesture', nextPage);
+//          $(document).on('swipeleft', '.gesture', nextPage);
           $(document).on('swipeleft', '.text', nextPage);
 
           $(document).on('swiperight', '.pictureContainer', prevPage);
           $(document).on('swiperight', '.picture', prevPage);
           $(document).on('swiperight', '.object', prevPage);
-          $(document).on('swiperight', '.gesture', prevPage);
+//          $(document).on('swiperight', '.gesture', prevPage);
           $(document).on('swiperight', '.text', prevPage);
 
           $(document).on('tap', '.object', tapObject);
-          $(document).on('tap', '.gesture', tapObject);
+//          $(document).on('tap', '.gesture', tapObject);
 
-          $(document).on('tap', '.howto', function(event) {
-            howtoModal.show();
+          $(document).on('touchmove', '.object', function(event) {
+            event.preventDefault();
           });
-          $(document).on('tap', '.howtoModal', function(event) {
-            howtoModal.hide();
-          });
+          $(document).on('drag', '.object', dragObject);
+
+          $(document).on('tap', '.howto', function(event) { howtoModal.show(); });
+          $(document).on('tap', '.howtoModal', function(event) { howtoModal.hide(); });
 
           var duration = $("#page01").width();
           var popupTips = [
@@ -94,6 +101,9 @@
             case 2:
               drawPage02();
               break;
+            case 5:
+              drawPage05();
+              break;
             default:
               drawPage();
               break;
@@ -102,9 +112,6 @@
 
         onLeave: function(index, nextIndex, direction){
           switch (currentPage) {
-            case 2:
-              erasePage02();
-              break;
             default:
               erasePage();
               break;
@@ -119,19 +126,20 @@
 	  });
 
     function nextPage(event) {
+      console.log("nextPage()");
       switch (currentPage) {
         case 2:
         case 5:
           if (timeoutID < 0) {
+            console.log("show tips " + currentPage);
             var tips = $("#page0" + currentPage + " .tips:eq(0)");
             tips.offset({
               top: $("#page0" + currentPage).height() * 0.5,
               left: $("#page0" + currentPage).width()
             });
-            var duration = $("#page0" + currentPage).width() * 0.5;
             tips.addClass("show");
-            //tips.animate({left: '-=' + duration + 'px'}, 500).animate({left: '+=0px'}, 3000).animate({ left: '+=' + duration + 'px'}, 500);
             timeoutID = setTimeout(function() {
+              console.log("hide tips");
               tips.removeClass("show");
               timeoutID = -1;
             }, 4000);
@@ -161,28 +169,62 @@
       }
     }
 
+    function dragObject(event) {
+      switch (currentPage) {
+        case 5: 
+          var px = event.originalEvent.gesture.center.pageX;
+          var py = event.originalEvent.gesture.center.pageY;
+          $(this).offset({
+            top: py - $(this).height()/2,
+            left: px - $(this).width()/2
+          });
+          break;
+        default:
+          break;
+      }
+    }
+
     function drawPage02() {
       var picture = $("#page02 .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
 
-      var size = section2_Objects.length;
+      var size = page02_Objects.length;
       for (var i = 0; i < size; i++) {
-        var door = $("#" + section2_Objects[i].id + " .door");
+        var door = $("#" + page02_Objects[i].id);
         door.width(door[0].naturalWidth * ratio);
         door.offset({
-          top: picture.offset().top + section2_Objects[i].top * ratio,
-          left: picture.offset().left + section2_Objects[i].left * ratio
+          top: picture.offset().top + page02_Objects[i].top * ratio,
+          left: picture.offset().left + page02_Objects[i].left * ratio
         });
         door.addClass("show");
-
-        $("#" + section2_Objects[i].id + " .tap").each(function() {
+/*
+        $("#" + page02_Objects[i].id + " .tap").each(function() {
           $(this).width($(this)[0].naturalWidth * ratio);
           $(this).offset({
             top: door.offset().top + door.height()/2 - $(this).height()/3,
             left: door.offset().left + door.width()/2 - $(this).width()/2
           });
-          $(this).addClass(section2_Objects[i].id);
+          $(this).addClass(page02_Objects[i].id);
         });
+*/
+      }
+
+      drawPage();
+    }
+
+    function drawPage05() {
+      var picture = $("#page05 .picture");
+      var ratio = picture.width() / picture[0].naturalWidth;
+
+      var size = page05_Objects.length;
+      for (var i = 0; i < size; i++) {
+        var ant = $("#" + page05_Objects[i].id);
+        ant.width(ant[0].naturalWidth * ratio);
+        ant.offset({
+          top: picture.offset().top + page05_Objects[i].top * ratio,
+          left: picture.offset().left + page05_Objects[i].left * ratio
+        });
+        ant.addClass("show");
       }
 
       drawPage();
@@ -191,7 +233,7 @@
     function drawPage() {
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
-
+/*
       $("#page0" + currentPage + " .gesture").each(function(){
         $(this).width($(this)[0].naturalWidth * ratio);
         $(this).offset({
@@ -200,7 +242,7 @@
         });
         $(this).addClass("show");
       });
-
+*/
       $("#page0" + currentPage + " .story").each(function(){
         $(this).width(textArea[currentPage-1].width * ratio);
         $(this).height(textArea[currentPage-1].height * ratio);
@@ -216,20 +258,16 @@
       });
     }
 
-    function erasePage02() {
-      var size = section2_Objects.length;
-      for (var i = 0; i < size; i++) {
-        $("#" + section2_Objects[i].id + " .door").removeClass("show");
-        $("#" + section2_Objects[i].id + " .tap").removeClass(section2_Objects[i].id);
-      }
-
-      erasePage();
-    }
-
     function erasePage() {
+/*
       $("#page0" + currentPage + " .gesture").each(function(){
         $(this).removeClass("show");
       });
+*/
+      $("#page0" + currentPage + " .object").each(function(){
+        $(this).removeClass("show");
+      });
+
       $("#page0" + currentPage + " .tips").each(function(){
         $(this).removeClass("show");
       });
@@ -247,12 +285,6 @@
       font-family: KosugiMaru-Regular;
       src: url('./font/KosugiMaru-Regular.ttf') format('truetype');
     }
-
-		.howtoModal {
-      text-align: center;
-      font-size: 4vw;
-      font-family: "KosugiMaru-Regular","Kosugi Maru","sans-serif";
-		}
 
 		.section {
 			background-image: url(img/cork021.jpg);
@@ -274,6 +306,12 @@
 			left: 0px;
 			width: 7%;
 			height: auto;
+		}
+
+		.howtoModal {
+      text-align: center;
+      font-size: 4vw;
+      font-family: "KosugiMaru-Regular","Kosugi Maru","sans-serif";
 		}
 
     .text {
@@ -300,11 +338,11 @@
       left: 0px;
       padding: 0px;
       text-align: center;
-      opacity: 0;
+      display: none;
     }
 
     .tips.show {
-      opacity: 1;
+      display: block;
       -webkit-animation: popupTips 4s linear;
     }
 
@@ -340,6 +378,7 @@
 			opacity: 1;
 		}
 
+/*
     .gesture {
 			position: absolute;
       top: 0px;
@@ -385,6 +424,7 @@
        96% { opacity: 1; }
       100% { opacity: 0; }
     }
+*/
 	</style>
 
 </head>
@@ -418,12 +458,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page02.png" />
-          <div id="door01">
-  					<img class="object door" src="img/page02_door01.png" />
-<!--
-	  				<img class="gesture tap" src="img/icon_tap.png" />
--->
-          </div>
+					<img class="object door" id="door01" src="img/page02_door01.png" />
           <div class="tips">
             <img src="img/tips.png" />
             <div class="text tip">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
@@ -452,10 +487,28 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page05.png" />
+					<img class="object cake" id="cake01" src="img/page05_cake01.png" />
+					<img class="object ant" id="ant01" src="img/page05_ant01.png" />
           <div class="tips">
             <img src="img/tips.png" />
             <div class="text tip">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
           </div>
+ 					<img class="howto" src="img/howto.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page06">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/page06.png" />
+ 					<img class="howto" src="img/howto.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page07">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/page07.png" />
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
