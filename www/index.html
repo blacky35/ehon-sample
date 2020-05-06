@@ -15,6 +15,9 @@
 	<script type="text/javascript">
 		var currentPage = 0;
     var timeoutID = 0;
+    var pageTraversing = false;
+
+    var page05Cleared = false;
 
     var lang = "ja";
 
@@ -83,7 +86,6 @@
           $(document).on('hold', '.object', holdObject);
           $(document).on('release', '.object img', releaseObject);
           $(document).on('release', '.object', releaseObject);
-
           $(document).on('tap', '.howto', function(event) { howtoModal.show(); });
           $(document).on('tap', '.howtoModal', function(event) { howtoModal.hide(); });
 
@@ -118,9 +120,12 @@
               drawPage();
               break;
           }
+
+          pageTraversing = false;
         },
 
         onLeave: function(index, nextIndex, direction){
+          pageTraversing = true;
           switch (currentPage) {
             default:
               erasePage();
@@ -136,11 +141,17 @@
 	  });
 
     function nextPage(event) {
+      if (pageTraversing) return;
+
       switch (currentPage) {
         case 2:
-        case 5:
           showTips(1, false);
           break;
+        case 5:
+          if (!page05Cleared) {
+            showTips(1, false);
+            break;
+          }
         default:
           $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
           break;
@@ -152,6 +163,7 @@
     }
 
     function prevPage(event) {
+      if (pageTraversing) return;
       $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
     }
 
@@ -174,8 +186,10 @@
 
         tips.find(".text").each(function() {
           if ($(this).hasClass(lang) && $(this).attr("id") == id) {
+            console.log("show " + id);
             $(this).addClass("show");
           } else {
+            console.log("hide " + id);
             $(this).removeClass("show");
           }
         });
@@ -200,15 +214,17 @@
     function holdObject(event) {
       switch (currentPage) {
         case 5:
-          var parent = $(this).parent();
-          if (parent.attr("id") == "ant") {
-            /*
-            parent.find("img").each(function() {
+          var obj = null;
+          if ($(this).attr("id") == "ant") obj = $(this);
+          if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
+
+          if (obj != null) {
+            console.log("dragObject(5)");
+            obj.find("img").each(function() {
               if (!$(this).hasClass("animation")) {
                 $(this).addClass("animation");
               }
             });
-            */
           }
           break;
         default:
@@ -224,20 +240,31 @@
           if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
 
           if (obj != null) {
-            console.log("dragObject(5)");
-            /*
-            parent.find("img").each(function() {
+            obj.find("img").each(function() {
               if (!$(this).hasClass("animation")) {
                 $(this).addClass("animation");
               }
             });
-            */
             var px = event.originalEvent.gesture.center.pageX;
             var py = event.originalEvent.gesture.center.pageY;
             obj.offset({
               top: py - obj.height()/2,
               left: px - obj.width()/2
             });
+
+            var cake = $("#page05 #cake");  
+            console.log("(" + obj.offset().top + " " + obj.offset().left + " " + obj.height() + " " + obj.width() + ") "
+                      + "(" + cake.offset().top + " " + cake.offset().left + " " + cake.height() + " " + cake.width() + ")");
+
+            if ((obj.offset().top < cake.offset().top + cake.height()/2)
+                && (obj.offset().left < cake.offset().left + cake.width()/2)
+                && (obj.offset().top + obj.height() > cake.offset().top + cake.height()/2)
+                && (obj.offset().left + obj.width() > cake.offset().left + cake.width()/2)) {
+              if (!page05Cleared) showTips(2,true);
+              page05Cleared = true;
+            } else {
+              page05Cleared = false;
+            }
           }
           break;
         default:
@@ -253,13 +280,11 @@
           if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
 
           if (obj != null) {
-            /*
             obj.find("img").each(function() {
               if ($(this).hasClass("animation")) {
                 $(this).removeClass("animation");
               }
             });
-            */
           }
           break;
         default:
@@ -425,8 +450,8 @@
       position: absolute;
       width: 50%;
       height: 30%;
-      top: -500px;
-      left: -500px;
+      top: 0px;
+      left: 4000px;
       padding: 0px;
       text-align: center;
       opacity: 0;
@@ -476,31 +501,38 @@
       width: 100%;
       height: 100%;
       margin: 0px;
-    }
-
-    .object img:nth-child(1) {
       opacity: 1;
     }
 
-    .object img:nth-child(2) {
+    .object img.ant:nth-child(1) {
+      opacity: 1;
+    }
+
+    .object img.ant:nth-child(2) {
       opacity: 0;
     }
 
     .object img:nth-child(1).animation {
-       -webkit-animation: walkAnt 1s linear 0s infinite;
+       -webkit-animation: walkAnt01 1s linear 0s infinite;
     }
 
     .object img:nth-child(2).animation {
-       -webkit-animation: walkAnt 1s linear 0.5s infinite;
+       -webkit-animation: walkAnt02 1s linear 0s infinite;
     }
 
-    @-webkit-keyframes walkAnt {
+    @-webkit-keyframes walkAnt01 {
         0% { opacity: 1; }
        50% { opacity: 1; }
        51% { opacity: 0; }
       100% { opacity: 0; }
     }
 
+    @-webkit-keyframes walkAnt02 {
+        0% { opacity: 0; }
+       50% { opacity: 0; }
+       51% { opacity: 1; }
+      100% { opacity: 1; }
+    }
 /*
     .gesture {
 			position: absolute;
@@ -554,7 +586,7 @@
 
 <body>
   <ons-modal class="howtoModal" id="howtoModal" var="howtoModal">
-    <p>絵本の読み方</p>
+    <p>ページのめくり方</p>
     <p>左にスワイプ：次のページに進む</p>
     <p>右にスワイプ：前のページに戻る</p>
     <p>
@@ -622,6 +654,7 @@
           <div class="tips">
             <img src="img/tips.png" />
             <div class="text tip ja" id="1">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
+            <div class="text tip ja" id="2">やったね！おめでとう！<br>ページをめくって<br>次のページにすすんでね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
 				</div>
