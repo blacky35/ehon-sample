@@ -14,7 +14,9 @@
 	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
 		var currentPage = 0;
-    var timeoutID = -1;
+    var timeoutID = 0;
+
+    var lang = "ja";
 
     var pageNavigate = [
       { prev: 1, next: 2 },  // page01
@@ -41,8 +43,8 @@
     ];
     
     var page05_Objects = [
-      { id : "cake01", top: 308, left: 714 },
-      { id : "ant01", top: 350, left: 300 },
+      { id : "cake", top: 308, left: 714 },
+      { id : "ant", top: 350, left: 300 },
     ];
     
     ons.ready( function() {
@@ -68,16 +70,24 @@
 //          $(document).on('swiperight', '.gesture', prevPage);
           $(document).on('swiperight', '.text', prevPage);
 
-          $(document).on('tap', '.object', tapObject);
-//          $(document).on('tap', '.gesture', tapObject);
-
+          $(document).on('touchmove', '.object img', function(event) {
+            event.preventDefault();
+          });
           $(document).on('touchmove', '.object', function(event) {
             event.preventDefault();
           });
+          $(document).on('tap', '.object img', tapObject);
+          $(document).on('drag', '.object img', dragObject);
           $(document).on('drag', '.object', dragObject);
+          $(document).on('hold', '.object img', holdObject);
+          $(document).on('hold', '.object', holdObject);
+          $(document).on('release', '.object img', releaseObject);
+          $(document).on('release', '.object', releaseObject);
 
           $(document).on('tap', '.howto', function(event) { howtoModal.show(); });
           $(document).on('tap', '.howtoModal', function(event) { howtoModal.hide(); });
+
+//          $(document).on('tap', '.gesture', tapObject);
 
           var duration = $("#page01").width();
           var popupTips = [
@@ -129,19 +139,7 @@
       switch (currentPage) {
         case 2:
         case 5:
-          if (timeoutID < 0) {
-            console.log("show tips");
-            var tips = $("#page0" + currentPage + " .tips:eq(0)");
-            tips.offset({
-              top: $("#page0" + currentPage).height() * 0.5,
-              left: $("#page0" + currentPage).width()
-            });
-            tips.addClass("show");
-            timeoutID = setTimeout(function() {
-              tips.removeClass("show");
-              timeoutID = -1;
-            }, 4000);
-          }
+          showTips(1, false);
           break;
         default:
           $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
@@ -167,15 +165,102 @@
       }
     }
 
+    function showTips(id, force) {
+      var f = function(tips, id) {
+        tips.offset({
+          top: $("#page0" + currentPage).height() * 0.5,
+          left: $("#page0" + currentPage).width()
+        });
+
+        tips.find(".text").each(function() {
+          if ($(this).hasClass(lang) && $(this).attr("id") == id) {
+            $(this).addClass("show");
+          } else {
+            $(this).removeClass("show");
+          }
+        });
+        tips.addClass("show");
+        timeoutID = setTimeout(function() {
+          tips.removeClass("show");
+          timeoutID = 0;
+        }, 4000);
+      };
+
+      var tips = $("#page0" + currentPage + " .tips:eq(0)");
+
+      if (timeoutID == 0) {
+        f(tips, id);
+      } else if (force) {
+        clearTimeout(timeoutID);
+        tips.removeClass("show");
+        timeoutID = setTimeout(f, 0, tips, id);
+      }
+    }
+
+    function holdObject(event) {
+      switch (currentPage) {
+        case 5:
+          var parent = $(this).parent();
+          if (parent.attr("id") == "ant") {
+            /*
+            parent.find("img").each(function() {
+              if (!$(this).hasClass("animation")) {
+                $(this).addClass("animation");
+              }
+            });
+            */
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     function dragObject(event) {
       switch (currentPage) {
-        case 5: 
-          var px = event.originalEvent.gesture.center.pageX;
-          var py = event.originalEvent.gesture.center.pageY;
-          $(this).offset({
-            top: py - $(this).height()/2,
-            left: px - $(this).width()/2
-          });
+        case 5:
+          var obj = null;
+          if ($(this).attr("id") == "ant") obj = $(this);
+          if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
+
+          if (obj != null) {
+            console.log("dragObject(5)");
+            /*
+            parent.find("img").each(function() {
+              if (!$(this).hasClass("animation")) {
+                $(this).addClass("animation");
+              }
+            });
+            */
+            var px = event.originalEvent.gesture.center.pageX;
+            var py = event.originalEvent.gesture.center.pageY;
+            obj.offset({
+              top: py - obj.height()/2,
+              left: px - obj.width()/2
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    function releaseObject(event) {
+      switch (currentPage) {
+        case 5:
+          var obj = null;
+          if ($(this).attr("id") == "ant") obj = $(this);
+          if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
+
+          if (obj != null) {
+            /*
+            obj.find("img").each(function() {
+              if ($(this).hasClass("animation")) {
+                $(this).removeClass("animation");
+              }
+            });
+            */
+          }
           break;
         default:
           break;
@@ -189,7 +274,9 @@
       var size = page02_Objects.length;
       for (var i = 0; i < size; i++) {
         var door = $("#" + page02_Objects[i].id);
-        door.width(door[0].naturalWidth * ratio);
+        var img = door.find("img:eq(0)");
+        door.width(img[0].naturalWidth * ratio);
+        door.height(img[0].naturalHeight * ratio);
         door.offset({
           top: picture.offset().top + page02_Objects[i].top * ratio,
           left: picture.offset().left + page02_Objects[i].left * ratio
@@ -216,13 +303,15 @@
 
       var size = page05_Objects.length;
       for (var i = 0; i < size; i++) {
-        var ant = $("#" + page05_Objects[i].id);
-        ant.width(ant[0].naturalWidth * ratio);
-        ant.offset({
+        var obj = $("#" + page05_Objects[i].id);
+        var img = obj.find("img:eq(0)");
+        obj.width(img[0].naturalWidth * ratio);
+        obj.height(img[0].naturalHeight * ratio);
+        obj.offset({
           top: picture.offset().top + page05_Objects[i].top * ratio,
           left: picture.offset().left + page05_Objects[i].left * ratio
         });
-        ant.addClass("show");
+        obj.addClass("show");
       }
 
       drawPage();
@@ -248,7 +337,7 @@
           top: picture.offset().top + textArea[currentPage-1].top * ratio,
           left: picture.offset().left + textArea[currentPage-1].left * ratio
         });
-        if ($(this).hasClass("jp")) {
+        if ($(this).hasClass(lang)) {
           $(this).addClass("show");
         } else { // en
           $(this).removeClass("show");
@@ -266,13 +355,17 @@
         $(this).removeClass("show");
       });
 
+      $("#page0" + currentPage + " .img").each(function(){
+        $(this).removeClass("animation");
+      });
+
       $("#page0" + currentPage + " .tips").each(function(){
         $(this).removeClass("show");
       });
 
       if (timeoutID > 0) {
         clearTimeout(timeoutID);
-        timeoutID = -1;
+        timeoutID = 0;
       }
     }
 
@@ -362,19 +455,51 @@
       top: 50%;
       left: 50%;
       -webkit-transform: translate(-50%,-50%);
-      opacity: 1;
     }
 
 		.object {
 			position: absolute;
 			top: 0px;
 			left: 0px;
+      padding: 0px;
 			opacity: 0;
 		}
 
 		.object.show {
 			opacity: 1;
 		}
+
+    .object img {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 100%;
+      margin: 0px;
+    }
+
+    .object img:nth-child(1) {
+      opacity: 1;
+    }
+
+    .object img:nth-child(2) {
+      opacity: 0;
+    }
+
+    .object img:nth-child(1).animation {
+       -webkit-animation: walkAnt 1s linear 0s infinite;
+    }
+
+    .object img:nth-child(2).animation {
+       -webkit-animation: walkAnt 1s linear 0.5s infinite;
+    }
+
+    @-webkit-keyframes walkAnt {
+        0% { opacity: 1; }
+       50% { opacity: 1; }
+       51% { opacity: 0; }
+      100% { opacity: 0; }
+    }
 
 /*
     .gesture {
@@ -443,7 +568,7 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page01.png" />
-          <div class="text story jp">あるひ、おさんぽにでかけた<br>マリちゃんは、ふしぎなみち<br>をみつけました。</div>
+          <div class="text story ja">あるひ、おさんぽにでかけた<br>マリちゃんは、ふしぎなみち<br>をみつけました。</div>
           <div class="text story en">One day, Mari took a walk and found a strange passway.</div>
 <!--
 					<img class="gesture swipe" src="img/icon_swipe.png" />
@@ -456,10 +581,12 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page02.png" />
-					<img class="object door" id="door01" src="img/page02_door01.png" />
+          <div class="object" id="door01">
+  					<img class="door" src="img/page02_door01.png" />
+          </div>
           <div class="tips">
             <img src="img/tips.png" />
-            <div class="text tip" id="1">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
+            <div class="text tip ja" id="1">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
         </div>
@@ -485,11 +612,16 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page05.png" />
-					<img class="object cake" id="cake01" src="img/page05_cake01.png" />
-					<img class="object ant" id="ant01" src="img/page05_ant01.png" />
+          <div class="object" id="cake">
+  					<img class="cake" src="img/page05_cake01.png" />
+          </div>
+          <div class="object" id="ant">
+  					<img class="ant" src="img/page05_ant01.png" />
+  					<img class="ant" src="img/page05_ant02.png" />
+          </div>
           <div class="tips">
             <img src="img/tips.png" />
-            <div class="text tip" id="1">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
+            <div class="text tip ja" id="1">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
           </div>
  					<img class="howto" src="img/howto.png" />
 				</div>
