@@ -13,11 +13,12 @@
 	<script src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
+    var numPages = 10;
 		var currentPage = 0;
     var timeoutID = 0;
     var pageTraversing = false;
 
-    var page05Cleared = false;
+    var pageCleared = false;
 
     var lang = "ja";
 
@@ -27,50 +28,61 @@
       { prev: 2, next: 4 },  // page03
       { prev: 3, next: 5 },  // page04
       { prev: 4, next: 6 },  // page05
-      { prev: 5, next: 7 },  // page05
-      { prev: 6, next: 7 },  // page05
+      { prev: 5, next: 7 },  // page06
+      { prev: 6, next: 8 },  // page07
+      { prev: 7, next: 8 },  // page08
     ];
 
     var textArea = [
-      { top: 650, left: 400, width: 750, height: 250 }, // page01
-      { top: 0, left: 0, width: 0, height: 0 }, // page01
-      { top: 0, left: 0, width: 0, height: 0 }, // page01
-      { top: 0, left: 0, width: 0, height: 0 }, // page01
-      { top: 0, left: 0, width: 0, height: 0 }, // page01
+      { 1: { top: 650, left: 400, width:  750, height: 250 } }, // page01
+      { 1: { top: 670, left: 600, width:  750, height: 230 } }, // page02
+      { 1: { top:  40, left: 200, width:  750, height: 250 } }, // page03
+      { 1: { top:  50, left:  50, width:  750, height: 250 } }, // page04
+      { 1: { top:  50, left:  50, width: 1100, height: 250 } }, // page05
+      { 1: { top: 320, left:  50, width:  750, height: 250 },
+        2: { top: 570, left: 600, width:  650, height: 250 } }, // page06
+      { 1: { top:  50, left: 100, width: 1000, height: 250 } }, // page07
+      { 1: { top:  50, left:  50, width: 1100, height: 200, invisible: true },
+        2: { top: 750, left:  50, width: 1100, height: 200, invisible: true } }, // page08
+      { 1: { top: 0, left: 0, width: 0, height: 0 } }, // page09
+      { 1: { top: 0, left: 0, width: 0, height: 0 } }, // page10
     ];
 
-    var page02_Objects = [
-      { id : "door01", top: 8, left: 156 },
-//      { id : "door02", top: 0, left: 0 },
-//      { id : "door03", top: 0, left: 0 },
-    ];
-    
-    var page05_Objects = [
-      { id : "cake", top: 308, left: 714 },
-      { id : "ant", top: 350, left: 300 },
-    ];
+    var objects = {
+      2: {
+        door01: { top: 8, left: 156 },
+//      door02: { top: 0, left: 0 },
+//      door03: { top: 0, left: 0 },
+        },
+      5: {
+        cake: { top: 362, left: 712 },
+         ant: { top: 370, left: 300 },
+        },
+      8: {
+        stone: { top: 325, left: 475, invisible: true },
+        },
+    };
     
     ons.ready( function() {
+      console.log(objects[1]);
       /*
 			 * Plugin intialization
 			 */
 	  	$('#pagepiling').pagepiling({
         direction: 'horizontal',
         touchSensitivity: 5,
- 	      sectionsColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white'],
+ 	      sectionsColor: new Array(numPages).fill('white'),
 		    navigation: false,
 
      		afterRender: function(){
           $(document).on('swipeleft', '.pictureContainer', nextPage);
           $(document).on('swipeleft', '.picture', nextPage);
           $(document).on('swipeleft', '.object', nextPage);
-//          $(document).on('swipeleft', '.gesture', nextPage);
           $(document).on('swipeleft', '.text', nextPage);
 
           $(document).on('swiperight', '.pictureContainer', prevPage);
           $(document).on('swiperight', '.picture', prevPage);
           $(document).on('swiperight', '.object', prevPage);
-//          $(document).on('swiperight', '.gesture', prevPage);
           $(document).on('swiperight', '.text', prevPage);
 
           $(document).on('touchmove', '.object img', function(event) {
@@ -89,8 +101,6 @@
           $(document).on('tap', '.howto', function(event) { howtoModal.show(); });
           $(document).on('tap', '.howtoModal', function(event) { howtoModal.hide(); });
 
-//          $(document).on('tap', '.gesture', tapObject);
-
           var duration = $("#page01").width();
           var popupTips = [
              "10% {left:" + Math.round(duration*0.5) + "px}",
@@ -108,19 +118,7 @@
 
         afterLoad: function(anchorLink, index){
           currentPage = index;
-
-          switch (currentPage) {
-            case 2:
-              drawPage02();
-              break;
-            case 5:
-              drawPage05();
-              break;
-            default:
-              drawPage();
-              break;
-          }
-
+          drawPage();
           pageTraversing = false;
         },
 
@@ -148,10 +146,19 @@
           showTips(1, false);
           break;
         case 5:
-          if (!page05Cleared) {
+          if (!pageCleared) {
             showTips(1, false);
-            break;
+          } else {
+            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
           }
+          break;
+        case 8:
+          if (!pageCleared) {
+            showTips(1, false);
+          } else {
+            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
+          }
+          break;
         default:
           $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
           break;
@@ -171,6 +178,19 @@
       switch (currentPage) {
         case 2: 
           nextPage02();
+          break;
+        case 8:
+          $("#page08 .object").each(function(){
+            $(this).addClass("show");
+          });
+          $("#page08 .story").each(function(){
+            if ($(this).hasClass(lang)) {
+              $(this).addClass("show");
+            } else { // en
+              $(this).removeClass("show");
+            }
+          });
+          pageCleared = true;
           break;
         default:
           break;
@@ -260,10 +280,10 @@
                 && (obj.offset().left < cake.offset().left + cake.width()/2)
                 && (obj.offset().top + obj.height() > cake.offset().top + cake.height()/2)
                 && (obj.offset().left + obj.width() > cake.offset().left + cake.width()/2)) {
-              if (!page05Cleared) showTips(2,true);
-              page05Cleared = true;
+              if (!pageCleared) showTips(2,true);
+              pageCleared = true;
             } else {
-              page05Cleared = false;
+              pageCleared = false;
             }
           }
           break;
@@ -292,77 +312,35 @@
       }
     }
 
-    function drawPage02() {
-      var picture = $("#page02 .picture");
-      var ratio = picture.width() / picture[0].naturalWidth;
-
-      var size = page02_Objects.length;
-      for (var i = 0; i < size; i++) {
-        var door = $("#" + page02_Objects[i].id);
-        var img = door.find("img:eq(0)");
-        door.width(img[0].naturalWidth * ratio);
-        door.height(img[0].naturalHeight * ratio);
-        door.offset({
-          top: picture.offset().top + page02_Objects[i].top * ratio,
-          left: picture.offset().left + page02_Objects[i].left * ratio
-        });
-        door.addClass("show");
-/*
-        $("#" + page02_Objects[i].id + " .tap").each(function() {
-          $(this).width($(this)[0].naturalWidth * ratio);
-          $(this).offset({
-            top: door.offset().top + door.height()/2 - $(this).height()/3,
-            left: door.offset().left + door.width()/2 - $(this).width()/2
-          });
-          $(this).addClass(page02_Objects[i].id);
-        });
-*/
-      }
-
-      drawPage();
-    }
-
-    function drawPage05() {
-      var picture = $("#page05 .picture");
-      var ratio = picture.width() / picture[0].naturalWidth;
-
-      var size = page05_Objects.length;
-      for (var i = 0; i < size; i++) {
-        var obj = $("#" + page05_Objects[i].id);
-        var img = obj.find("img:eq(0)");
-        obj.width(img[0].naturalWidth * ratio);
-        obj.height(img[0].naturalHeight * ratio);
-        obj.offset({
-          top: picture.offset().top + page05_Objects[i].top * ratio,
-          left: picture.offset().left + page05_Objects[i].left * ratio
-        });
-        obj.addClass("show");
-      }
-
-      drawPage();
-    }
-
     function drawPage() {
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
-/*
-      $("#page0" + currentPage + " .gesture").each(function(){
-        $(this).width($(this)[0].naturalWidth * ratio);
-        $(this).offset({
-          top: picture.offset().top + picture.height() - $(this).height(),
-          left: picture.offset().left + picture.width() - $(this).width()
+
+      if (currentPage in objects) {
+        $("#page0"  + currentPage + " .object").each(function(){
+          var pos = objects[currentPage][$(this).attr('id')];
+          var img = $(this).find("img:eq(0)");
+          $(this).width(img[0].naturalWidth * ratio);
+          $(this).height(img[0].naturalHeight * ratio);
+          $(this).offset({
+            top: picture.offset().top + pos.top * ratio,
+            left: picture.offset().left + pos.left * ratio
+          });
+          if (!pos.invisible) {
+            $(this).addClass("show");
+          }
         });
-        $(this).addClass("show");
-      });
-*/
+      }
+
       $("#page0" + currentPage + " .story").each(function(){
-        $(this).width(textArea[currentPage-1].width * ratio);
-        $(this).height(textArea[currentPage-1].height * ratio);
+        var rect = textArea[currentPage-1][$(this).attr('id')];
+        $(this).width(rect.width * ratio);
+        $(this).height(rect.height * ratio);
         $(this).offset({
-          top: picture.offset().top + textArea[currentPage-1].top * ratio,
-          left: picture.offset().left + textArea[currentPage-1].left * ratio
+          top: picture.offset().top + rect.top * ratio,
+          left: picture.offset().left + rect.left * ratio
         });
-        if ($(this).hasClass(lang)) {
+        if ($(this).hasClass(lang) && !rect.invisible) {
           $(this).addClass("show");
         } else { // en
           $(this).removeClass("show");
@@ -371,11 +349,10 @@
     }
 
     function erasePage() {
-/*
-      $("#page0" + currentPage + " .gesture").each(function(){
+      $("#page0" + currentPage + " .story").each(function(){
         $(this).removeClass("show");
       });
-*/
+
       $("#page0" + currentPage + " .object").each(function(){
         $(this).removeClass("show");
       });
@@ -392,6 +369,8 @@
         clearTimeout(timeoutID);
         timeoutID = 0;
       }
+
+      pageCleared = false;
     }
 
   </script>
@@ -533,53 +512,6 @@
        51% { opacity: 1; }
       100% { opacity: 1; }
     }
-/*
-    .gesture {
-			position: absolute;
-      top: 0px;
-      left: 0px; 
-      opacity: 0;
-    }
-
-    .gesture.swipe.show {
-       -webkit-animation: swipeLeft 2s ease-in-out 10s infinite ;
-    }
-
-    .gesture.tap.door01 {
-       -webkit-animation: tapDoor01 6s ease-in-out 10s infinite ;
-    }
-
-    @-webkit-keyframes swipeLeft {
-        0% { opacity: 0; }
-       80% { opacity: 1; -webkit-transform: translateX(-150px); }
-      100% { opacity: 1; -webkit-transform: translateX(-150px); }
-    }
-
-    @-webkit-keyframes tapDoor01 {
-        0% { opacity: 0; }
-       20% { opacity: 1; }
-       30% { opacity: 1; }
-       33% { opacity: 0; }
-      100% { opacity: 0; }
-    }
-
-    @-webkit-keyframes tapDoor02 {
-        0% { opacity: 0; }
-       33% { opacity: 0; }
-       53% { opacity: 1; }
-       63% { opacity: 1; }
-       66% { opacity: 0; }
-      100% { opacity: 0; }
-    }
-
-    @-webkit-keyframes tapDoor03 {
-        0% { opacity: 0; }
-       66% { opacity: 0; }
-       86% { opacity: 1; }
-       96% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-*/
 	</style>
 
 </head>
@@ -600,11 +532,8 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page01.png" />
-          <div class="text story ja">あるひ、おさんぽにでかけた<br>マリちゃんは、ふしぎなみち<br>をみつけました。</div>
-          <div class="text story en">One day, Mari took a walk and found a strange passway.</div>
-<!--
-					<img class="gesture swipe" src="img/icon_swipe.png" />
--->
+          <div id="1" class="text story ja">あるひ、おさんぽにでかけた<br>マリちゃんは、ふしぎなみち<br>をみつけました。</div>
+          <div id="1" class="text story en">One day, Mari took a walk and found a strange passway.</div>
  					<img class="howto" src="img/howto.png"/>
 				</div>
 			</ons-gesture-detector>
@@ -616,6 +545,8 @@
           <div class="object" id="door01">
   					<img class="door" src="img/page02_door01.png" />
           </div>
+          <div id="1" class="text story ja">そのみちのさいごには、<br>おおきなとびらが３つ<br>ありました。</div>
+          <div id="1" class="text story en">There are three large doors<br>at the end of the passway.</div>
           <div class="tips">
             <img src="img/tips.png" />
             <div class="text tip ja" id="1">3つのとびらのうち<br>すきなとびらを<br>ゆびでタップしてね</div>
@@ -628,6 +559,8 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page03.png" />
+          <div id="1" class="text story ja">そこは、ゆめのくにの<br>いりぐちでした。</div>
+          <div id="1" class="text story en">xxx.</div>
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
@@ -636,6 +569,8 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page04.png" />
+          <div id="1" class="text story ja">「マリちゃん、<br>こちらへいらっしゃいよ。」<br><br>いちごのようせいがいい<br>ました。</div>
+          <div id="1" class="text story en">xxx.</div>
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
@@ -651,6 +586,8 @@
   					<img class="ant" src="img/page05_ant01.png" />
   					<img class="ant" src="img/page05_ant02.png" />
           </div>
+          <div id="1" class="text story ja">「マリちゃん、このありさんをケーキのところまでつれていってくれないかしら。」</div>
+          <div id="1" class="text story en">xxx.</div>
           <div class="tips">
             <img src="img/tips.png" />
             <div class="text tip ja" id="1">ありさんをゆびで<br>ドラッグして<br>ケーキにつれていってね</div>
@@ -664,6 +601,10 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page06.png" />
+          <div id="1" class="text story ja">「ありがとう。」</div>
+          <div id="1" class="text story en">xxx.</div>
+          <div id="2" class="text story ja">「おかげで、おいしい<br>ケーキがたべられたよ。」</div>
+          <div id="2" class="text story en">xxx.</div>
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
@@ -672,6 +613,27 @@
 			<ons-gesture-detector>
 				<div class="pictureContainer">
 					<img class="picture" src="img/page07.png" />
+          <div id="1" class="text story ja">「おれいに、これをあげるよ。」</div>
+          <div id="1" class="text story en">xxx.</div>
+ 					<img class="howto" src="img/howto.png" />
+				</div>
+			</ons-gesture-detector>
+		</div>
+		<div class="section" id="page08">
+			<ons-gesture-detector>
+				<div class="pictureContainer">
+					<img class="picture" src="img/page08.png" />
+          <div class="object" id="stone">
+  					<img class="stone" src="img/page08_stone01.png" />
+          </div>
+          <div id="1" class="text story ja">マリちゃんがてをみると、そこにはふしぎな<br>ひかるいしがありました。</div>
+          <div id="1" class="text story en">xxx.</div>
+          <div id="2" class="text story ja">「ありがとう。」<br>と、マリちゃんはいいました。</div>
+          <div id="2" class="text story en">xxx.</div>
+          <div class="tips">
+            <img src="img/tips.png" />
+            <div class="text tip ja" id="1">てのひらをゆびで<br>タップしてね</div>
+          </div>
  					<img class="howto" src="img/howto.png" />
 				</div>
 			</ons-gesture-detector>
