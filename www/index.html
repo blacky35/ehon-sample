@@ -13,15 +13,59 @@
 	<script src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery.pagepiling.min.js"></script>
 	<script type="text/javascript">
-    var numPages = 10;
+    //var numPages = 10;
 		var currentPage = 0;
     var timeoutID = 0;
     var pageTraversing = false;
 
-    var pageCleared = false;
+    var pageLocked = false;
 
     var lang = "ja";
 
+    var pageInfo = {
+      1: { navigate: { prev: 1, next: 2 },
+               text: { 1: { top: 650, left: 400, width:  750, height: 250 } },
+             locked: false,
+         },
+      2: { navigate: { prev: 1, next: 3 },
+             door01: { top: 8, left: 156 },
+//           door02: { top: 0, left: 0 },
+//           door03: { top: 0, left: 0 },
+               text: { 1: { top: 670, left: 600, width:  750, height: 230 } },
+             locked: true,
+         },
+      3: { navigate: { prev: 2, next: 4 },
+               text: { 1: { top:  40, left: 200, width:  750, height: 250 } },
+             locked: false,
+         },
+      4: { navigate: { prev: 3, next: 5 },
+               text: { 1: { top:  50, left:  50, width:  750, height: 250 } },
+             locked: false,
+         },     
+      5: { navigate: { prev: 4, next: 6 },
+               cake: { top: 362, left: 712 },
+                ant: { top: 370, left: 300 },
+               text: { 1: { top:  50, left:  50, width: 1100, height: 250 } },
+             locked: true,
+         },
+      6: { navigate: { prev: 5, next: 7 },
+               text: { 1: { top: 320, left:  50, width:  750, height: 250 },
+                       2: { top: 570, left: 600, width:  650, height: 250 } }, 
+             locked: false,
+         },
+      7: { navigate: { prev: 6, next: 8 },
+               text: { 1: { top:  50, left: 100, width: 1000, height: 250 } },
+             locked: false,
+         },
+      8: { navigate: { prev: 7, next: 8 },
+              stone: { top: 325, left: 475, invisible: true },
+               text: { 1: { top:  50, left:  50, width: 1100, height: 200, invisible: true },
+                       2: { top: 750, left:  50, width: 1100, height: 200, invisible: true } },
+             locked: true,
+         },
+    };
+
+/*
     var pageNavigate = [
       { prev: 1, next: 2 },  // page01
       { prev: 1, next: 3 },  // page02
@@ -44,8 +88,6 @@
       { 1: { top:  50, left: 100, width: 1000, height: 250 } }, // page07
       { 1: { top:  50, left:  50, width: 1100, height: 200, invisible: true },
         2: { top: 750, left:  50, width: 1100, height: 200, invisible: true } }, // page08
-      { 1: { top: 0, left: 0, width: 0, height: 0 } }, // page09
-      { 1: { top: 0, left: 0, width: 0, height: 0 } }, // page10
     ];
 
     var objects = {
@@ -62,16 +104,15 @@
         stone: { top: 325, left: 475, invisible: true },
         },
     };
-    
+*/
     ons.ready( function() {
-      console.log(objects[1]);
       /*
 			 * Plugin intialization
 			 */
 	  	$('#pagepiling').pagepiling({
         direction: 'horizontal',
         touchSensitivity: 5,
- 	      sectionsColor: new Array(numPages).fill('white'),
+ 	      sectionsColor: new Array(Object.keys(pageInfo).length).fill('white'),
 		    navigation: false,
 
      		afterRender: function(){
@@ -118,17 +159,14 @@
 
         afterLoad: function(anchorLink, index){
           currentPage = index;
+          pageLocked = pageInfo[currentPage].locked;
           drawPage();
           pageTraversing = false;
         },
 
         onLeave: function(index, nextIndex, direction){
           pageTraversing = true;
-          switch (currentPage) {
-            default:
-              erasePage();
-              break;
-          }
+          erasePage();
         }
 	    });
 
@@ -140,44 +178,23 @@
 
     function nextPage(event) {
       if (pageTraversing) return;
-
-      switch (currentPage) {
-        case 2:
-          showTips(1, false);
-          break;
-        case 5:
-          if (!pageCleared) {
-            showTips(1, false);
-          } else {
-            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-          }
-          break;
-        case 8:
-          if (!pageCleared) {
-            showTips(1, false);
-          } else {
-            $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-          }
-          break;
-        default:
-          $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
-          break;
+      if (pageLocked) {
+        showTips(1, false);
+      } else {
+        $.fn.pagepiling.moveTo(pageInfo[currentPage].navigate.next);
       }
-    }
-
-    function nextPage02() {
-      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].next);
     }
 
     function prevPage(event) {
       if (pageTraversing) return;
-      $.fn.pagepiling.moveTo(pageNavigate[currentPage-1].prev);
+      $.fn.pagepiling.moveTo(pageInfo[currentPage].navigate.prev);
     }
 
     function tapObject(event) {
       switch (currentPage) {
         case 2: 
-          nextPage02();
+          pageLocked = false;
+          nextPage();
           break;
         case 8:
           $("#page08 .object").each(function(){
@@ -190,7 +207,7 @@
               $(this).removeClass("show");
             }
           });
-          pageCleared = true;
+          pageLocked = false;
           break;
         default:
           break;
@@ -239,7 +256,6 @@
           if ($(this).parent().attr("id") == "ant") obj = $(this).parent();
 
           if (obj != null) {
-            console.log("dragObject(5)");
             obj.find("img").each(function() {
               if (!$(this).hasClass("animation")) {
                 $(this).addClass("animation");
@@ -280,10 +296,10 @@
                 && (obj.offset().left < cake.offset().left + cake.width()/2)
                 && (obj.offset().top + obj.height() > cake.offset().top + cake.height()/2)
                 && (obj.offset().left + obj.width() > cake.offset().left + cake.width()/2)) {
-              if (!pageCleared) showTips(2,true);
-              pageCleared = true;
+              if (pageLocked) showTips(2,true);
+              pageLocked = false;
             } else {
-              pageCleared = false;
+              pageLocked = true;
             }
           }
           break;
@@ -316,24 +332,24 @@
       var picture = $("#page0" + currentPage + " .picture");
       var ratio = picture.width() / picture[0].naturalWidth;
 
-      if (currentPage in objects) {
-        $("#page0"  + currentPage + " .object").each(function(){
-          var pos = objects[currentPage][$(this).attr('id')];
-          var img = $(this).find("img:eq(0)");
-          $(this).width(img[0].naturalWidth * ratio);
-          $(this).height(img[0].naturalHeight * ratio);
-          $(this).offset({
-            top: picture.offset().top + pos.top * ratio,
-            left: picture.offset().left + pos.left * ratio
-          });
-          if (!pos.invisible) {
-            $(this).addClass("show");
-          }
+      pinfo = pageInfo[currentPage];
+
+      $("#page0"  + currentPage + " .object").each(function(){
+        var pos = pinfo[$(this).attr('id')];
+        var img = $(this).find("img:eq(0)");
+        $(this).width(img[0].naturalWidth * ratio);
+        $(this).height(img[0].naturalHeight * ratio);
+        $(this).offset({
+          top: picture.offset().top + pos.top * ratio,
+          left: picture.offset().left + pos.left * ratio
         });
-      }
+        if (!pos.invisible) {
+          $(this).addClass("show");
+        }
+      });
 
       $("#page0" + currentPage + " .story").each(function(){
-        var rect = textArea[currentPage-1][$(this).attr('id')];
+        var rect = pinfo.text[$(this).attr('id')];
         $(this).width(rect.width * ratio);
         $(this).height(rect.height * ratio);
         $(this).offset({
@@ -369,8 +385,6 @@
         clearTimeout(timeoutID);
         timeoutID = 0;
       }
-
-      pageCleared = false;
     }
 
   </script>
